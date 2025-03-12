@@ -256,115 +256,163 @@ st.title("Loan Portfolio Monitoring Dashboard")
 # Portfolio Overview metrics
 st.header("Portfolio Overview")
 col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric(
-        "Total Portfolio Value", 
-        f"${filtered_df['remaining_balance'].sum():,.2f}",
-        delta=f"{(filtered_df['remaining_balance'].sum() / df['loan_amount'].sum() - 1) * 100:.1f}%"
-    )
-
-with col2:
-    weighted_irr = (filtered_df['irr'] * filtered_df['remaining_balance']).sum() / filtered_df['remaining_balance'].sum()
-    st.metric(
-        "Weighted Average IRR", 
-        f"{weighted_irr:.2%}",
-        delta=f"{(weighted_irr - (df['irr'] * df['remaining_balance']).sum() / df['remaining_balance'].sum()) * 100:.2f}pp"
-    )
-
-with col3:
-    weighted_wal = (filtered_df['wal'] * filtered_df['remaining_balance']).sum() / filtered_df['remaining_balance'].sum()
-    st.metric(
-        "Weighted Average Life", 
-        f"{weighted_wal:.2f} months",
-        delta=f"{(weighted_wal - (df['wal'] * df['remaining_balance']).sum() / df['remaining_balance'].sum()):.2f} mo"
-    )
-
-with col4:
-    delinquency_rate = filtered_df[filtered_df['delinquency_status'] != 'Current'].shape[0] / filtered_df.shape[0]
-    st.metric(
-        "Delinquency Rate", 
-        f"{delinquency_rate:.2%}",
-        delta=f"{-(delinquency_rate - df[df['delinquency_status'] != 'Current'].shape[0] / df.shape[0]) * 100:.2f}pp", 
-        delta_color="inverse"
-    )
-
-# Performance by Collateral Type
-st.subheader("Performance by Collateral Type")
-col1, col2 = st.columns(2)
-
-with col1:
-    # Portfolio Composition
-    collateral_counts = filtered_df['collateral_type'].value_counts().reset_index()
-    collateral_counts.columns = ['Collateral Type', 'Count']
+try:
+    with col1:
+        st.metric(
+            "Total Portfolio Value", 
+            f"${filtered_df['remaining_balance'].sum():,.2f}",
+            delta=f"{(filtered_df['remaining_balance'].sum() / df['loan_amount'].sum() - 1) * 100:.1f}%"
+        )
     
-    fig = px.pie(
-        collateral_counts, 
-        values='Count', 
-        names='Collateral Type',
-        title='Portfolio Composition by Collateral Type',
-        hole=0.4,
-        color_discrete_sequence=px.colors.qualitative.Set2
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-with col2:
-    # IRR by Collateral Type
-    irr_by_collateral = filtered_df.groupby('collateral_type').apply(
-        lambda x: (x['irr'] * x['remaining_balance']).sum() / x['remaining_balance'].sum()
-    ).reset_index()
-    irr_by_collateral.columns = ['Collateral Type', 'Weighted IRR']
+    with col2:
+        weighted_irr = (filtered_df['irr'] * filtered_df['remaining_balance']).sum() / filtered_df['remaining_balance'].sum()
+        st.metric(
+            "Weighted Average IRR", 
+            f"{weighted_irr:.2%}",
+            delta=f"{(weighted_irr - (df['irr'] * df['remaining_balance']).sum() / df['remaining_balance'].sum()) * 100:.2f}pp"
+        )
     
-    fig = px.bar(
-        irr_by_collateral,
-        x='Collateral Type',
-        y='Weighted IRR',
-        title='Weighted Average IRR by Collateral Type',
-        color='Collateral Type',
-        color_discrete_sequence=px.colors.qualitative.Set2,
-        text_auto='.2%'
-    )
-    fig.update_layout(yaxis_tickformat='.2%')
-    st.plotly_chart(fig, use_container_width=True)
-
-# Delinquency Analysis
-st.subheader("Delinquency Analysis")
-col1, col2 = st.columns(2)
-
-with col1:
-    # Delinquency Status Distribution
-    delinq_counts = filtered_df['delinquency_status'].value_counts().reset_index()
-    delinq_counts.columns = ['Delinquency Status', 'Count']
+    with col3:
+        weighted_wal = (filtered_df['wal'] * filtered_df['remaining_balance']).sum() / filtered_df['remaining_balance'].sum()
+        st.metric(
+            "Weighted Average Life", 
+            f"{weighted_wal:.2f} months",
+            delta=f"{(weighted_wal - (df['wal'] * df['remaining_balance']).sum() / df['remaining_balance'].sum()):.2f} mo"
+        )
     
-    # Set order for delinquency status
-    status_order = ['Current', '30 Days', '60 Days', '90+ Days', 'Default']
-    delinq_counts['Delinquency Status'] = pd.Categorical(
-        delinq_counts['Delinquency Status'], 
-        categories=status_order, 
-        ordered=True
-    )
-    delinq_counts = delinq_counts.sort_values('Delinquency Status')
+    with col4:
+        delinquency_rate = filtered_df[filtered_df['delinquency_status'] != 'Current'].shape[0] / filtered_df.shape[0]
+        st.metric(
+            "Delinquency Rate", 
+            f"{delinquency_rate:.2%}",
+            delta=f"{-(delinquency_rate - df[df['delinquency_status'] != 'Current'].shape[0] / df.shape[0]) * 100:.2f}pp", 
+            delta_color="inverse"
+        )
     
-    fig = px.bar(
-        delinq_counts,
-        x='Delinquency Status',
-        y='Count',
-        title='Loan Count by Delinquency Status',
-        color='Delinquency Status',
-        color_discrete_map={
-            'Current': 'green',
-            '30 Days': 'yellow',
-            '60 Days': 'orange',
-            '90+ Days': 'red',
-            'Default': 'black'
-        }
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-with col2:
-    # Delinquency by Collateral Type
-    delinq_by_collateral = filtered_df.pivot_table(
-        index='collateral_type',
+    # Performance by Collateral Type
+    st.subheader("Performance by Collateral Type")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Portfolio Composition
+        collateral_counts = filtered_df['collateral_type'].value_counts().reset_index()
+        collateral_counts.columns = ['Collateral Type', 'Count']
+        
+        fig = px.pie(
+            collateral_counts, 
+            values='Count', 
+            names='Collateral Type',
+            title='Portfolio Composition by Collateral Type',
+            hole=0.4,
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # IRR by Collateral Type
+        irr_by_collateral = filtered_df.groupby('collateral_type').apply(
+            lambda x: (x['irr'] * x['remaining_balance']).sum() / x['remaining_balance'].sum()
+        ).reset_index()
+        irr_by_collateral.columns = ['Collateral Type', 'Weighted IRR']
+        
+        fig = px.bar(
+            irr_by_collateral,
+            x='Collateral Type',
+            y='Weighted IRR',
+            title='Weighted Average IRR by Collateral Type',
+            color='Collateral Type',
+            color_discrete_sequence=px.colors.qualitative.Set2,
+            text_auto='.2%'
+        )
+        fig.update_layout(yaxis_tickformat='.2%')
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Delinquency Analysis
+    st.subheader("Delinquency Analysis")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Delinquency Status Distribution
+        delinq_counts = filtered_df['delinquency_status'].value_counts().reset_index()
+        delinq_counts.columns = ['Delinquency Status', 'Count']
+        
+        # Set order for delinquency status
+        status_order = ['Current', '30 Days', '60 Days', '90+ Days', 'Default']
+        delinq_counts['Delinquency Status'] = pd.Categorical(
+            delinq_counts['Delinquency Status'], 
+            categories=status_order, 
+            ordered=True
+        )
+        delinq_counts = delinq_counts.sort_values('Delinquency Status')
+        
+        fig = px.bar(
+            delinq_counts,
+            x='Delinquency Status',
+            y='Count',
+            title='Loan Count by Delinquency Status',
+            color='Delinquency Status',
+            color_discrete_map={
+                'Current': 'green',
+                '30 Days': 'yellow',
+                '60 Days': 'orange',
+                '90+ Days': 'red',
+                'Default': 'black'
+            }
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Delinquency by Collateral Type
+        delinq_by_collateral = filtered_df.pivot_table(
+            index='collateral_type',
+            columns='delinquency_status',
+            values='loan_id',
+            aggfunc='count',
+            fill_value=0
+        )
+        
+        # Ensure all delinquency statuses are present
+        for status in status_order:
+            if status not in delinq_by_collateral.columns:
+                delinq_by_collateral[status] = 0
+        
+        delinq_by_collateral = delinq_by_collateral[status_order]
+        
+        # Calculate percentages
+        delinq_pct = delinq_by_collateral.div(delinq_by_collateral.sum(axis=1), axis=0)
+        
+        # Convert to long format for plotting
+        delinq_pct_long = delinq_pct.reset_index().melt(
+            id_vars='collateral_type',
+            value_vars=status_order,
+            var_name='Delinquency Status',
+            value_name='Percentage'
+        )
+        
+        fig = px.bar(
+            delinq_pct_long,
+            x='collateral_type',
+            y='Percentage',
+            color='Delinquency Status',
+            title='Delinquency Status Distribution by Collateral Type',
+            labels={'collateral_type': 'Collateral Type', 'Percentage': 'Percentage of Loans'},
+            color_discrete_map={
+                'Current': 'green',
+                '30 Days': 'yellow',
+                '60 Days': 'orange',
+                '90+ Days': 'red',
+                'Default': 'black'
+            }
+        )
+        fig.update_layout(yaxis_tickformat='.0%')
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Vintage Analysis
+    st.subheader("Vintage Analysis")
+    
+    # Prepare data for vintage analysis
+    vintage_delinq = filtered_df.pivot_table(
+        index='vintage',
         columns='delinquency_status',
         values='loan_id',
         aggfunc='count',
@@ -373,206 +421,160 @@ with col2:
     
     # Ensure all delinquency statuses are present
     for status in status_order:
-        if status not in delinq_by_collateral.columns:
-            delinq_by_collateral[status] = 0
+        if status not in vintage_delinq.columns:
+            vintage_delinq[status] = 0
     
-    delinq_by_collateral = delinq_by_collateral[status_order]
+    vintage_delinq = vintage_delinq[status_order]
     
     # Calculate percentages
-    delinq_pct = delinq_by_collateral.div(delinq_by_collateral.sum(axis=1), axis=0)
+    vintage_delinq_pct = vintage_delinq.div(vintage_delinq.sum(axis=1), axis=0)
     
-    # Convert to long format for plotting
-    delinq_pct_long = delinq_pct.reset_index().melt(
-        id_vars='collateral_type',
-        value_vars=status_order,
-        var_name='Delinquency Status',
-        value_name='Percentage'
+    # Create combined metric (delinquency index)
+    vintage_delinq_pct['Delinquency Index'] = (
+        vintage_delinq_pct['30 Days'] * 1 +
+        vintage_delinq_pct['60 Days'] * 2 +
+        vintage_delinq_pct['90+ Days'] * 3 +
+        vintage_delinq_pct['Default'] * 4
     )
     
-    fig = px.bar(
-        delinq_pct_long,
-        x='collateral_type',
-        y='Percentage',
-        color='Delinquency Status',
-        title='Delinquency Status Distribution by Collateral Type',
-        labels={'collateral_type': 'Collateral Type', 'Percentage': 'Percentage of Loans'},
-        color_discrete_map={
-            'Current': 'green',
-            '30 Days': 'yellow',
-            '60 Days': 'orange',
-            '90+ Days': 'red',
-            'Default': 'black'
+    # Sort by vintage
+    vintage_delinq_pct = vintage_delinq_pct.reset_index()
+    vintage_delinq_pct['vintage_sort'] = pd.Categorical(
+        vintage_delinq_pct['vintage'],
+        categories=sorted(vintage_delinq_pct['vintage'].unique()),
+        ordered=True
+    )
+    vintage_delinq_pct = vintage_delinq_pct.sort_values('vintage_sort')
+    
+    # Plot vintage delinquency index
+    fig = px.line(
+        vintage_delinq_pct,
+        x='vintage',
+        y='Delinquency Index',
+        title='Delinquency Index by Vintage (Higher = Worse Performance)',
+        markers=True
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # IRR and WAL Analysis
+    st.subheader("Risk-Adjusted Return Analysis")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Scatter plot of IRR vs WAL
+        fig = px.scatter(
+            filtered_df,
+            x='wal',
+            y='irr',
+            color='collateral_type',
+            size='remaining_balance',
+            hover_data=['loan_id', 'fico_score', 'delinquency_status', 'interest_rate'],
+            title='IRR vs WAL by Collateral Type',
+            labels={'wal': 'Weighted Average Life (months)', 'irr': 'Internal Rate of Return'},
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        fig.update_layout(yaxis_tickformat='.2%')
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # FICO Score vs IRR
+        fig = px.scatter(
+            filtered_df,
+            x='fico_score',
+            y='irr',
+            color='delinquency_status',
+            size='remaining_balance',
+            hover_data=['loan_id', 'collateral_type', 'interest_rate'],
+            title='FICO Score vs IRR by Delinquency Status',
+            labels={'fico_score': 'FICO Score', 'irr': 'Internal Rate of Return'},
+            color_discrete_map={
+                'Current': 'green',
+                '30 Days': 'yellow',
+                '60 Days': 'orange',
+                '90+ Days': 'red',
+                'Default': 'black'
+            }
+        )
+        fig.update_layout(yaxis_tickformat='.2%')
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Loan-level Data with AgGrid
+    st.subheader("Loan-Level Data")
+    
+    # Format data for display
+    display_df = filtered_df.copy()
+    display_df['origination_date'] = display_df['origination_date'].dt.date
+    display_df['interest_rate'] = display_df['interest_rate'].apply(lambda x: f"{x:.2%}")
+    display_df['purchase_price_pct'] = display_df['purchase_price_pct'].apply(lambda x: f"{x:.2%}")
+    display_df['irr'] = display_df['irr'].apply(lambda x: f"{x:.2%}")
+    display_df['remaining_balance'] = display_df['remaining_balance'].apply(lambda x: f"${x:,.2f}")
+    display_df['loan_amount'] = display_df['loan_amount'].apply(lambda x: f"${x:,.2f}")
+    
+    # Select columns for display
+    display_columns = [
+        'loan_id', 'origination_date', 'vintage', 'collateral_type', 
+        'loan_amount', 'remaining_balance', 'loan_term', 'wal',
+        'interest_rate', 'irr', 'fico_score', 'delinquency_status', 'purchase_price_pct'
+    ]
+    display_df = display_df[display_columns]
+    
+    # Configure AgGrid
+    gb = GridOptionsBuilder.from_dataframe(display_df)
+    gb.configure_pagination(paginationAutoPageSize=False, paginationPageSize=15)
+    gb.configure_column('loan_id', headerCheckboxSelection=True)
+    gb.configure_selection('multiple', use_checkbox=True)
+    gb.configure_default_column(
+        groupable=True, 
+        value=True, 
+        enableRowGroup=True, 
+        aggFunc='count', 
+        editable=False
+    )
+    
+    # Cell styling
+    delinquency_cellstyle = JsCode("""
+    function(params) {
+        if (params.value === 'Current') {
+            return {'color': 'white', 'backgroundColor': 'green'};
+        } else if (params.value === '30 Days') {
+            return {'color': 'black', 'backgroundColor': 'yellow'};
+        } else if (params.value === '60 Days') {
+            return {'color': 'black', 'backgroundColor': 'orange'};
+        } else if (params.value === '90+ Days') {
+            return {'color': 'white', 'backgroundColor': 'red'};
+        } else if (params.value === 'Default') {
+            return {'color': 'white', 'backgroundColor': 'black'};
         }
-    )
-    fig.update_layout(yaxis_tickformat='.0%')
-    st.plotly_chart(fig, use_container_width=True)
-
-# Vintage Analysis
-st.subheader("Vintage Analysis")
-
-# Prepare data for vintage analysis
-vintage_delinq = filtered_df.pivot_table(
-    index='vintage',
-    columns='delinquency_status',
-    values='loan_id',
-    aggfunc='count',
-    fill_value=0
-)
-
-# Ensure all delinquency statuses are present
-for status in status_order:
-    if status not in vintage_delinq.columns:
-        vintage_delinq[status] = 0
-
-vintage_delinq = vintage_delinq[status_order]
-
-# Calculate percentages
-vintage_delinq_pct = vintage_delinq.div(vintage_delinq.sum(axis=1), axis=0)
-
-# Create combined metric (delinquency index)
-vintage_delinq_pct['Delinquency Index'] = (
-    vintage_delinq_pct['30 Days'] * 1 +
-    vintage_delinq_pct['60 Days'] * 2 +
-    vintage_delinq_pct['90+ Days'] * 3 +
-    vintage_delinq_pct['Default'] * 4
-)
-
-# Sort by vintage
-vintage_delinq_pct = vintage_delinq_pct.reset_index()
-vintage_delinq_pct['vintage_sort'] = pd.Categorical(
-    vintage_delinq_pct['vintage'],
-    categories=sorted(vintage_delinq_pct['vintage'].unique()),
-    ordered=True
-)
-vintage_delinq_pct = vintage_delinq_pct.sort_values('vintage_sort')
-
-# Plot vintage delinquency index
-fig = px.line(
-    vintage_delinq_pct,
-    x='vintage',
-    y='Delinquency Index',
-    title='Delinquency Index by Vintage (Higher = Worse Performance)',
-    markers=True
-)
-st.plotly_chart(fig, use_container_width=True)
-
-# IRR and WAL Analysis
-st.subheader("Risk-Adjusted Return Analysis")
-col1, col2 = st.columns(2)
-
-with col1:
-    # Scatter plot of IRR vs WAL
-    fig = px.scatter(
-        filtered_df,
-        x='wal',
-        y='irr',
-        color='collateral_type',
-        size='remaining_balance',
-        hover_data=['loan_id', 'fico_score', 'delinquency_status', 'interest_rate'],
-        title='IRR vs WAL by Collateral Type',
-        labels={'wal': 'Weighted Average Life (months)', 'irr': 'Internal Rate of Return'},
-        color_discrete_sequence=px.colors.qualitative.Set2
-    )
-    fig.update_layout(yaxis_tickformat='.2%')
-    st.plotly_chart(fig, use_container_width=True)
-
-with col2:
-    # FICO Score vs IRR
-    fig = px.scatter(
-        filtered_df,
-        x='fico_score',
-        y='irr',
-        color='delinquency_status',
-        size='remaining_balance',
-        hover_data=['loan_id', 'collateral_type', 'interest_rate'],
-        title='FICO Score vs IRR by Delinquency Status',
-        labels={'fico_score': 'FICO Score', 'irr': 'Internal Rate of Return'},
-        color_discrete_map={
-            'Current': 'green',
-            '30 Days': 'yellow',
-            '60 Days': 'orange',
-            '90+ Days': 'red',
-            'Default': 'black'
-        }
-    )
-    fig.update_layout(yaxis_tickformat='.2%')
-    st.plotly_chart(fig, use_container_width=True)
-
-# Loan-level Data with AgGrid
-st.subheader("Loan-Level Data")
-
-# Format data for display
-display_df = filtered_df.copy()
-display_df['origination_date'] = display_df['origination_date'].dt.date
-display_df['interest_rate'] = display_df['interest_rate'].apply(lambda x: f"{x:.2%}")
-display_df['purchase_price_pct'] = display_df['purchase_price_pct'].apply(lambda x: f"{x:.2%}")
-display_df['irr'] = display_df['irr'].apply(lambda x: f"{x:.2%}")
-display_df['remaining_balance'] = display_df['remaining_balance'].apply(lambda x: f"${x:,.2f}")
-display_df['loan_amount'] = display_df['loan_amount'].apply(lambda x: f"${x:,.2f}")
-
-# Select columns for display
-display_columns = [
-    'loan_id', 'origination_date', 'vintage', 'collateral_type', 
-    'loan_amount', 'remaining_balance', 'loan_term', 'wal',
-    'interest_rate', 'irr', 'fico_score', 'delinquency_status', 'purchase_price_pct'
-]
-display_df = display_df[display_columns]
-
-# Configure AgGrid
-gb = GridOptionsBuilder.from_dataframe(display_df)
-gb.configure_pagination(paginationAutoPageSize=False, paginationPageSize=15)
-gb.configure_column('loan_id', headerCheckboxSelection=True)
-gb.configure_selection('multiple', use_checkbox=True)
-gb.configure_default_column(
-    groupable=True, 
-    value=True, 
-    enableRowGroup=True, 
-    aggFunc='count', 
-    editable=False
-)
-
-# Cell styling
-delinquency_cellstyle = JsCode("""
-function(params) {
-    if (params.value === 'Current') {
-        return {'color': 'white', 'backgroundColor': 'green'};
-    } else if (params.value === '30 Days') {
-        return {'color': 'black', 'backgroundColor': 'yellow'};
-    } else if (params.value === '60 Days') {
-        return {'color': 'black', 'backgroundColor': 'orange'};
-    } else if (params.value === '90+ Days') {
-        return {'color': 'white', 'backgroundColor': 'red'};
-    } else if (params.value === 'Default') {
-        return {'color': 'white', 'backgroundColor': 'black'};
+        return {'color': 'black', 'backgroundColor': 'white'};
     }
-    return {'color': 'black', 'backgroundColor': 'white'};
-}
-""")
-
-gb.configure_column('delinquency_status', cellStyle=delinquency_cellstyle)
-
-grid_options = gb.build()
-ag_grid = AgGrid(
-    display_df,
-    gridOptions=grid_options,
-    enable_enterprise_modules=True,
-    allow_unsafe_jscode=True,
-    update_on_grid_options_change=True
-)
-
-# Show selected rows
-selected_rows = ag_grid['selected_rows']
-if selected_rows:
-    st.write(f"Selected {len(selected_rows)} loans for detailed analysis")
+    """)
     
-    # Show detailed info for selected loans
-    selected_df = pd.DataFrame(selected_rows)
+    gb.configure_column('delinquency_status', cellStyle=delinquency_cellstyle)
     
-    # Calculate summary metrics
-    total_balance = selected_df['remaining_balance'].str.replace('$', '').str.replace(',', '').astype(float).sum()
-    
-    st.metric(
-        "Selected Portfolio Value", 
-        f"${total_balance:,.2f}",
-        delta=f"{total_balance / filtered_df['remaining_balance'].str.replace('$', '').str.replace(',', '').astype(float).sum():.2%} of filtered portfolio"
+    grid_options = gb.build()
+    ag_grid = AgGrid(
+        display_df,
+        gridOptions=grid_options,
+        enable_enterprise_modules=True,
+        allow_unsafe_jscode=True,
+        update_on_grid_options_change=True
     )
+    
+    # Show selected rows
+    selected_rows = ag_grid['selected_rows']
+    if selected_rows:
+        st.write(f"Selected {len(selected_rows)} loans for detailed analysis")
+        
+        # Show detailed info for selected loans
+        selected_df = pd.DataFrame(selected_rows)
+        
+        # Calculate summary metrics
+        total_balance = selected_df['remaining_balance'].str.replace('$', '').str.replace(',', '').astype(float).sum()
+        
+        st.metric(
+            "Selected Portfolio Value", 
+            f"${total_balance:,.2f}",
+            delta=f"{total_balance / filtered_df['remaining_balance'].str.replace('$', '').str.replace(',', '').astype(float).sum():.2%} of filtered portfolio"
+        )
+except:
+    st.write('')
